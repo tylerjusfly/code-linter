@@ -1,1 +1,2 @@
-prin()
+prin
+console

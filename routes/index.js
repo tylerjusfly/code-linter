@@ -11,15 +11,26 @@ router.post("/lint", async function (req, res) {
 
   const tempFilePath = path.join(__dirname, `temp_code.${lang}`);
   try {
+
+    if(lang !== 'py' || lang !== 'js'){
+      return res.status(400).json({
+        success: false,
+        message: "Unsupported language",
+      });
+    }
+
     fs.writeFileSync(tempFilePath, code);
 
     let lintCommand;
     if (lang === "py") {
       lintCommand = spawn("pylint", [tempFilePath, "--output-format=json"]);
     } else if (lang === "js") {
-      lintCommand = spawn("ESLintBear", [tempFilePath]);
+      lintCommand = spawn("ESLintBear", [tempFilePath], { shell: true });
     } else {
-      return res.status(400).send("Unsupported language");
+      return res.status(400).json({
+        success: false,
+        message: "Unsupported language",
+      });
     }
 
     lintCommand.stdout.on("data", (data) => {
@@ -44,16 +55,22 @@ router.post("/lint", async function (req, res) {
     });
 
     lintCommand.stderr.on("data", (data) => {
-      console.error(`stderr: ${data}`);
-      return res.status(500).send("Linting failed");
+      // console.error(`stderr: ${data}`);
+      return res.status(500).json({
+        success: false,
+        message: "Linting failed",
+      });
     });
 
-    lintCommand.on("close", (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
+    // lintCommand.on("close", (code) => {
+    //   console.log(`child process exited with code ${code}`);
+    // });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send("Linting failed");
+    // console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Linting failed",
+    });
   }
 });
 
