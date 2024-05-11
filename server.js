@@ -1,29 +1,80 @@
-const express = require('express');
-const logger = require('morgan');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-
+const express = require("express");
 const app = express();
+const http = require("http");
+const cors = require("cors");
+const { Server } = require("socket.io");
+const path = require("path");
+const fs = require("fs");
+const { spawn } = require("child_process");
+app.use(cors());
 
-const indexRouter = require('./routes/index');
+const server = http.createServer(app);
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json());
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
 
-app.use(
-	cors({
-		origin: '*',
-		methods: ['POST'],
-		credentials: true,
-	})
-);
+io.on("connection", (socket) => {
+  console.log(`User Connected: ${socket.id}`);
 
-app.use('/', indexRouter);
+  socket.on("send_code", async (data) => {
+    const tempFilePath = path.join("./", `temp_code.${data.lang}`);
 
+    fs.writeFileSync(tempFilePath, data.code);
 
-app.listen(4002, () =>{
-    console.log('connected to ' + 4002)
-})
+    let results = [];
+
+    let lintCommand;
+    if (data.lang === "py") {
+      lintCommand = spawn("pylint", [tempFilePath, "--output-format=json"]);
+    } else if (data.lang === "js") {
+      lintCommand = spawn("ESLintBear", [tempFilePath], { shell: true });
+    } else {
+      results = [];
+      // return [];
+    }
+
+    // let results = [];
+
+    lintCommand.stdout.on("data", (data) => {
+      const lintResult = data ? JSON.parse(data) : [];
+
+      results = lintResult
+        .map((result) => {
+          if (result.type === "error") {
+            return {
+              startLineNumber: result.line,
+              startColumn: result.column,
+              endLineNumber: result.line,
+              endColumn: result.column + 1,
+              message: result.message,
+              severity: result.type === "error" ? 8 : 4,
+            };
+          }
+          return null;
+        })
+        .filter((result) => result !== null);
+
+      socket.emit("get_markers", { results: results });
+      console.log("fexx", results);
+    });
+
+    lintCommand.stderr.on("data", () => {
+      // Handle stderr if needed
+      results = [];
+    });
+
+    // console.log('res', results)
+  });
+
+  socket.on("disconnect", () => {
+    console.log("User Disconnected", socket.id);
+  });
+});
+
+server.listen(4002, () => {
+  console.log(`SERVER RUNNING ON ${4002}`);
+});
