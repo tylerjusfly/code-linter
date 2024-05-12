@@ -1,4 +1,6 @@
 node_modules/
 yarn.lock
 package.lock.json
-routes/temp_code.html
+routes/*
+temp_code.py
+temp_code.js
