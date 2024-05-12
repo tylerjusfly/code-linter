@@ -59,7 +59,6 @@ io.on("connection", (socket) => {
         .filter((result) => result !== null);
 
       socket.emit("get_markers", { results: results });
-      console.log("fexx", results);
     });
 
     lintCommand.stderr.on("data", () => {
@@ -67,7 +66,6 @@ io.on("connection", (socket) => {
       results = [];
     });
 
-    // console.log('res', results)
   });
 
   socket.on("disconnect", () => {
