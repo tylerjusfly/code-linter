@@ -14,3 +14,18 @@ socket.on('get_markers', (data) => {
     })
 
 ```
+
+### server Requirement
+<!-- This has been met in the dockerfile -->
+- PIP
+- PyLint
+
+## Building with Docker
+
+```
+docker build -t linters .
+```
+
+```
+docker run -p 4002:4002 <IMAGEID>
+```

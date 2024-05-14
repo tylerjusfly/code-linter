@@ -7,8 +7,12 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 app.use(cors());
+require('dotenv').config()
 
 const server = http.createServer(app);
+
+// eslint-disable-next-line no-undef
+const PORT = parseInt(process.env.PORT, 10) || 4002
 
 const io = new Server(server, {
   cors: {
@@ -73,6 +77,6 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(4002, () => {
-  console.log(`SERVER RUNNING ON ${4002}`);
+server.listen(PORT, () => {
+  console.log(`SERVER RUNNING ON ${PORT}`);
 });

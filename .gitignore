@@ -4,3 +4,4 @@ package.lock.json
 routes/*
 temp_code.py
 temp_code.js
+.env
